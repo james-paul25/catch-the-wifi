@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catch the Wi-Fi</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #1a1a2e;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        canvas {
+            background: #16213e;
+            display: block;
+            margin: 20px auto;
+            border: 3px solid #0f3460;
+            border-radius: 12px;
+        }
+
+        #score {
+            font-size: 20px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            background: #e94560;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #ff6b81;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>📶 Catch the Wi-Fi</h1>
+    <p id="score">Score: 0</p>
+    <canvas id="gameCanvas" width="400" height="500"></canvas>
+    <button onclick="startGame()">Play Again</button>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        let basket, items, score, gameOver, gameInterval;
+
+        function startGame() {
+            basket = { x: 160, y: 460, width: 80, height: 20, speed: 20 };
+            items = [];
+            score = 0;
+            gameOver = false;
+            document.getElementById("score").innerText = "Score: 0";
+
+            if (gameInterval) clearInterval(gameInterval);
+            gameInterval = setInterval(updateGame, 50);
+            setTimeout(() => { gameOver = true; }, 30000); // 30 seconds
+        }
+
+        function updateGame() {
+            if (gameOver) {
+                clearInterval(gameInterval);
+                ctx.fillStyle = "white";
+                ctx.font = "24px Arial";
+                ctx.fillText("Game Over! Final Score: " + score, 20, 250);
+                return;
+            }
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw basket
+            ctx.fillStyle = "#0f3460";
+            ctx.fillRect(basket.x, basket.y, basket.width, basket.height);
+
+            // Randomly create falling items
+            if (Math.random() < 0.05) {
+                const good = Math.random() > 0.3; // 70% chance good item
+                items.push({
+                    x: Math.random() * 370,
+                    y: 0,
+                    size: 30,
+                    good: good
+                });
+            }
+
+            // Draw and move items
+            for (let i = 0; i < items.length; i++) {
+                let item = items[i];
+                item.y += 5;
+
+                ctx.fillStyle = item.good ? "lime" : "red";
+                ctx.beginPath();
+                ctx.arc(item.x, item.y, item.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Collision detection
+                if (
+                    item.y + item.size > basket.y &&
+                    item.x > basket.x &&
+                    item.x < basket.x + basket.width
+                ) {
+                    if (item.good) score++;
+                    else score--;
+                    items.splice(i, 1);
+                    i--;
+                    document.getElementById("score").innerText = "Score: " + score;
+                }
+            }
+        }
+
+        // Controls
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowLeft" && basket.x > 0) basket.x -= basket.speed;
+            if (e.key === "ArrowRight" && basket.x < canvas.width - basket.width)
+                basket.x += basket.speed;
+        });
+
+        // Start game initially
+        startGame();
+    </script>
+</body>
+
+</html>
